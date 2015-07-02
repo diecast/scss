@@ -1,0 +1,7 @@
+[package]
+name = "diecast-scss"
+version = "0.1.0"
+authors = ["Jorge Israel Peña <jorge.israel.p@gmail.com>"]
+
+[dependencies.diecast]
+path = "../diecast"
