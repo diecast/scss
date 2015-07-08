@@ -1,39 +1,49 @@
 extern crate diecast;
+extern crate sass_rs;
 
 use std::path::PathBuf;
-use std::process::Command;
 
-use diecast::{Handle, Bind};
+use sass_rs::sass_context::SassFileContext;
+
+use diecast::{Handle, Bind, Item};
 
 pub struct Scss {
     input: PathBuf,
     output: PathBuf,
 }
 
-// TODO
-// this should probably use a rule for watching scss
-// and a separte rule css that depends on it for
-// generating a single item?
 impl Handle<Bind> for Scss {
     fn handle(&self, bind: &mut Bind) -> diecast::Result<()> {
-        let conf = &bind.data().configuration;
-        let source = conf.input.join(&self.input);
-        let destination = conf.output.join(&self.output);
+        let source = bind.data().configuration.input.join(&self.input);
+        let destination = bind.data().configuration.output.join(&self.output);
 
-        if let Some(parent) = destination.parent() {
-            try!(diecast::support::mkdir_p(parent));
+        let parent = try! {
+            destination.parent()
+            .ok_or(format!("[SCSS] path has no parent: {:?}", destination))
+        };
+
+        try!(diecast::support::mkdir_p(parent));
+
+        let load_path = try! {
+            source.parent()
+            .ok_or(format!("[SCSS] path has no parent: {:?}", source))
+        };
+
+        let source_str = try! {
+            source.to_str()
+            .ok_or(format!("[SCSS] path is not UTF-8: {:?}", source))
+        };
+
+        let mut file_context = SassFileContext::new(source_str);
+
+        {
+            file_context.sass_context.sass_options
+            .write().unwrap().set_include_paths(&[load_path]);
         }
 
-        // let mut command = Command::new("scss");
-        let mut command = Command::new("./sassc-3.2.5/bin/sassc");
-
-        if let Some(load_path) = source.parent() {
-            command.arg("-I").arg(load_path.to_path_buf());
-        }
-
-        command.arg(source).arg(destination);
-
-        try!(command.status());
+        let mut css = Item::writing(&destination);
+        css.body = try!(file_context.compile());
+        bind.attach(css);
 
         Ok(())
     }
