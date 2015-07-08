@@ -43,6 +43,7 @@ impl Handle<Bind> for Scss {
 
         let mut css = Item::writing(&destination);
         css.body = try!(file_context.compile());
+        try!(::diecast::util::handle::item::write(&mut css));
         bind.attach(css);
 
         Ok(())
