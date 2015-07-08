@@ -24,7 +24,8 @@ impl Handle<Bind> for Scss {
             try!(diecast::support::mkdir_p(parent));
         }
 
-        let mut command = Command::new("scss");
+        // let mut command = Command::new("scss");
+        let mut command = Command::new("./sassc-3.2.5/bin/sassc");
 
         if let Some(load_path) = source.parent() {
             command.arg("-I").arg(load_path.to_path_buf());
