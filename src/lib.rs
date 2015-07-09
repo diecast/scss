@@ -24,22 +24,12 @@ impl Handle<Bind> for Scss {
 
         try!(diecast::support::mkdir_p(parent));
 
-        let load_path = try! {
-            source.parent()
-            .ok_or(format!("[SCSS] path has no parent: {:?}", source))
-        };
-
         let source_str = try! {
             source.to_str()
             .ok_or(format!("[SCSS] path is not UTF-8: {:?}", source))
         };
 
         let mut file_context = SassFileContext::new(source_str);
-
-        {
-            file_context.sass_context.sass_options
-            .write().unwrap().set_include_paths(&[load_path]);
-        }
 
         let mut css = Item::writing(&destination);
         css.body = try!(file_context.compile());
